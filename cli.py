@@ -12,6 +12,16 @@ from agents.base import AuditLogger
 supervisor = SystemSupervisor(model_provider="mock")
 
 
+def parse_bool(value):
+    """Parse CSV booleans without treating nonempty strings as True."""
+    text = str(value).strip().lower()
+    if text in {"true", "1", "yes", "y"}:
+        return True
+    if text in {"false", "0", "no", "n", ""}:
+        return False
+    raise ValueError(f"Invalid boolean value: {value!r}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="sanger-trace-trimmer", description="Sanger Trace Trimmer")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -98,7 +108,7 @@ def main(argv=None):
                 primary_metric=float(r.get("primary_metric", 15.0)),
                 secondary_metric=float(r.get("secondary_metric", 5.0)),
                 status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
+                is_critical_flag=parse_bool(r.get("is_critical_flag", False)),
             )
             dossier = supervisor.process_task(payload)
             row_dict = dict(r)
