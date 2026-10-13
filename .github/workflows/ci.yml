@@ -26,6 +26,10 @@ jobs:
         run: python -m compileall -q agents cli.py sanger_trim.py trace_quality.py enrichment.py simulator.py
       - name: Lint trimming implementation and regression tests
         run: ruff check trace_quality.py tests/test_trace_quality.py
+      - name: Validate browser code
+        run: |
+          node --check web/app.js
+          node --test web/app.test.cjs
       - name: Test
         run: python -m pytest -q
       - name: Verify signed audit trail
