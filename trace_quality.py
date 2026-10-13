@@ -110,6 +110,8 @@ def write_records(results: list[dict], path: Path, output_format: str) -> None:
         raise ValueError("output_format must be fasta or fastq")
     with path.open("w", encoding="ascii", newline="\n") as handle:
         for r in results:
+            if not r["trimmed_length"]:
+                continue  # Reject empty reads from sequence exports; keep them in QC reports.
             name = str(r["name"]).replace("\r", " ").replace("\n", " ")
             if output_format == "fasta":
                 handle.write(f">{name} start={r['start']} end={r['end']}\n{r['sequence']}\n")
