@@ -9,7 +9,7 @@ services:
     environment:
       # IMPORTANT: Override this in production with a secure random value.
       # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
-      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:-change-me-in-production}
+      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:?Set a random AUDIT_SECRET_KEY before startup}
       - MODEL_PROVIDER=mock
     restart: unless-stopped
     healthcheck:
