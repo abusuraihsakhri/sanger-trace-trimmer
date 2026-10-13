@@ -52,3 +52,26 @@ def test_reject_malformed_fastq(tmp_path, bad):
     p.write_text(bad)
     with pytest.raises(ValueError):
         list(read_fastq(p))
+
+
+def test_synthetic_ab1_basecalls(tmp_path):
+    """Minimal ABIF directory fixture exercises real Biopython ABI parsing."""
+    import struct
+    pytest.importorskip("Bio")
+    from trace_quality import read_ab1
+
+    def entry(tag, number, datatype, element_size, n, offset):
+        return struct.pack(">4sIHHIIII", tag, number, datatype, element_size,
+                           n, n, offset, 0)
+
+    sequence = b"NNACGTACGTNN"
+    quality = bytes([2, 2] + [35] * 8 + [2, 2])
+    root = struct.pack(">4sIHHIIII", b"tdir", 1, 1023, 28, 2, 56, 34, 0)
+    data = (b"ABIF" + struct.pack(">H", 100) + root +
+            entry(b"PBAS", 2, 2, 1, 12, 90) +
+            entry(b"PCON", 2, 2, 1, 12, 102) + sequence + quality)
+    p = tmp_path / "synthetic.ab1"
+    p.write_bytes(data)
+    read = list(read_ab1(p))[0]
+    assert read[1] == "NNACGTACGTNN"
+    assert trim_record(*read)["sequence"] == "ACGTACGT"
