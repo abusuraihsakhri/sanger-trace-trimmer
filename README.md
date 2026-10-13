@@ -1,162 +1,63 @@
 # Sanger Trace Trimmer
 
-> **Domain:** Clinical Decision Support & Biomedical Computing
-> **Reference Guidelines & Standards:** Standard Clinical Formulations & ISO/IEC Quality Frameworks
+Quality-based trimming of Sanger sequencing reads from ABI/AB1 chromatograms or Phred+33 FASTQ records. An independent static browser application is available in the `web/` directory. GitHub Pages deployment is configured; see the repository's **Deploy browser application** workflow for deployment status.
 
-<div align="center">
+## Features
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+- **Mott trimming:** retain the contiguous segment with the highest cumulative score, using P(error at cutoff) − P(error per base). Defaults to Q20, with a configurable minimum retained length.
+- **Read-level QC:** zero-based start/end-exclusive boundaries, retained length, Q20 and Q30 fractions, and ambiguous IUPAC-base fraction.
+- **Inputs:** AB1/ABI base calls and PCON qualities, or four-line Phred+33 FASTQ.
+- **Outputs:** FASTA, FASTQ (retaining Phred scores), and JSON QC summaries. Reads failing the minimum-length filter remain in the report but are omitted from sequence exports.
+- **Offline browser use:** the static app reads and processes files locally; there is no upload endpoint or external script dependency.
 
-</div>
+This tool **does not perform vector alignment, trace peak re-calling, base-call correction, or clinical validation**. Inspect chromatograms and align sequence as appropriate before interpreting results.
 
----
+## Browser
 
-## 📖 What It Does
-
-Sanger AB1 quality trim via Mott algorithm with Q20/Q30 quality scoring, ambiguous call rate analysis, and vector screen stub. Includes stdlib CSV parser/mapper with batch processing and single lookup capabilities.
-
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Analytical Functions
-
-- **`lookup(query)`** — Single term lookup using token overlap + substring scoring (no external dependencies). Returns top hits with relevance scores.
-- **`process_csv(inp, out)`** — Batch processes CSV files, running lookup on each row against a query column. Outputs enriched results.
-- **`build_parser()`** — Constructs the CLI argument parser with subcommands.
-- **`main(argv)`** — CLI entry point for `sanger_trim` module.
-
----
-
-## 💻 Installation
+Open `web/index.html` from an HTTP static server, or use the GitHub Pages deployment once it has succeeded.
 
 ```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/sanger-trace-trimmer.git
-cd sanger-trace-trimmer
-
-# Install dependencies
-pip install -e .
-
-# For development (includes pytest)
-pip install -e ".[dev]"
+python -m http.server 8000 --directory web
 ```
 
----
+Visit http://127.0.0.1:8000. Select a .ab1/.abi or .fastq/.fq file, or paste FASTQ data, set the Q threshold and minimum length, and select **Trim & analyze**. Use **Load example** for a test dataset. Downloads are generated within the browser tab. Modern Chromium, Firefox, and Safari with JavaScript and File APIs are expected; automated cross-browser verification has not been completed.
 
-## 🚀 CLI Quickstart & Usage
+**Data handling:** Input files and identifiers stay in the browser for this static app; no server is contacted. Browser downloads save results to the local device. The separately hosted FastAPI service is a different interface.
 
-### 1. Single Lookup
+## Python CLI
+
+Python 3.10+:
+
+```bash
+python -m pip install -e ".[trace]"
+sanger-trim input.ab1 --output trimmed.fasta --cutoff-q 20 --min-length 100 --report qc.json
+sanger-trim reads.fastq --output trimmed.fastq --format fastq --report qc.json
+```
+
+The `[trace]` extra installs Biopython for ABI/AB1 reading. FASTQ trimming uses only Python's standard library. You can also run `python -m trace_quality` without installing the package, provided its runtime dependencies are present. Output coordinates are 0-based, end-exclusive. A read without a positive-scoring segment is rejected (retained length 0).
+
+## Legacy interfaces
+
+The repository also retains the pre-existing generic `sanger_trim.py` lookup/CSV tool, and the separately simulated supervisor CLI and FastAPI server for backward compatibility:
+
 ```bash
 python -m sanger_trim single creatinine
+sanger-trace-trimmer audit --task-id EXAMPLE-001
+sanger-trace-trimmer serve --host 127.0.0.1 --port 8000
 ```
 
-### 2. Batch CSV Processing
-```bash
-python -m sanger_trim batch --input sample.csv --output results.csv
-```
+These legacy interfaces **are not a Sanger quality trimmer**. The supervisor uses a mock model, and its audit criteria are generic illustrative thresholds, not validated CAP/CLSI decision rules. The in-memory HMAC audit trail requires `AUDIT_SECRET_KEY` for persistent production identity; it is not durable across service restarts and is not a substitute for a compliance-grade audit system. The API should not be publicly exposed without appropriate network access controls and authentication.
 
-### 3. Supervisor CLI (Enterprise Features)
-```bash
-# Run a single audit task
-python cli.py audit --task-id TASK-001 --primary 28.5 --secondary 14.2
-
-# Batch process records
-python cli.py batch -i sample.csv -o results.csv
-
-# Verify audit trail integrity
-python cli.py verify-audit
-
-# Start FastAPI server
-python cli.py serve --host 127.0.0.1 --port 8000
-```
-
-### Parameter Reference
-- `--task-id`: Unique task / case identifier
-- `--target`: Entity, patient key, or genomic target
-- `--primary`: Primary domain measurement or score
-- `--secondary`: Secondary kinetic or confidence score
-- `--critical`: Emergency escalation flag
-- `--status`: Status code or phenotype descriptor
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
-### Security Configuration
-
-**IMPORTANT:** Set a strong random secret for the audit trail in production:
+## Development and tests
 
 ```bash
-# Generate a secure key
-python -c "import secrets; print(secrets.token_hex(32))"
-
-# Set via environment variable
-export AUDIT_SECRET_KEY="your-generated-key"
+python -m pip install -e ".[dev,trace]"
+python -m pytest -q
+node --test web/app.test.cjs
 ```
 
----
+GitHub Actions tests Python 3.10–3.12, verifies import/compilation, runs targeted linting, and tests the browser trimming logic using Node. Static website deployment uses the `web/` directory. Docker support remains available for the legacy API, but Compose requires an explicitly configured, securely generated `AUDIT_SECRET_KEY`.
 
-## 🧪 Testing & Verification
+## License
 
-Run the automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py 1000
-```
-
----
-
-## 🐳 Container Deployment
-
-```bash
-# Build and run with Docker Compose
-AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") docker-compose up -d
-
-# Or build manually
-docker build -t sanger-trace-trimmer .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") sanger-trace-trimmer
-```
-
----
-
-## 📁 Project Structure
-
-```
-sanger-trace-trimmer/
-├── agents/                 # Enterprise agent framework
-│   ├── api.py             # FastAPI REST endpoints
-│   ├── base.py            # PHI guard, HMAC audit trail
-│   ├── models.py          # Pydantic data models
-│   ├── supervisor.py      # Multi-agent orchestrator
-│   ├── workers.py         # Specialized evaluation workers
-│   └── ...
-├── tests/                 # Test suite
-├── cli.py                 # Enterprise CLI entry point
-├── sanger_trim.py         # Core lookup & CSV processing
-├── simulator.py           # Load testing simulator
-├── pyproject.toml         # Package manifest
-└── Dockerfile             # Container build config
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
+MIT; see [LICENSE](LICENSE).

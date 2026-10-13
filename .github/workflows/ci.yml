@@ -1,10 +1,10 @@
-name: Sanger Trace Trimmer CI/CD & Security Verification
+name: Sanger Trace Trimmer CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
 
 jobs:
   test-and-audit:
@@ -12,29 +12,26 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install fastapi uvicorn pydantic pytest
-
-    - name: Run Pytest Suite
-      run: |
-        pytest -v
-
-    - name: Security SAST & Zero-PHI Audit
-      run: |
-        python -c "
-        from agents.base import PHIGuard, AuditLogger
-        import pytest
-        assert AuditLogger.verify_integrity() is True
-        print('Security & Zero-PHI Audit Passed!')
-        "
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install project and QA tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,trace]" ruff
+          python -m pip check
+      - name: Compile modules
+        run: python -m compileall -q agents cli.py sanger_trim.py trace_quality.py enrichment.py simulator.py
+      - name: Lint trimming implementation and regression tests
+        run: ruff check trace_quality.py tests/test_trace_quality.py
+      - name: Validate browser code
+        run: |
+          node --check web/app.js
+          node --test web/app.test.cjs
+      - name: Test
+        run: python -m pytest -q
+      - name: Verify signed audit trail
+        run: |
+          python -c "from agents.base import AuditLogger; assert AuditLogger.verify_integrity()"

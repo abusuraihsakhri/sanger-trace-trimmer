@@ -85,3 +85,19 @@ class TestAuditTrail:
         trail = AuditTrail(secret_key="test-key")
         trail.log("a", "t", "E1", {"x": 1})
         assert len(trail.get_trail()) == 1
+
+
+def test_audit_rejects_direct_signature_tamper():
+    trail = AuditTrail(secret_key="test-key")
+    trail.log("worker", "tier", "EVENT", {"count": 1})
+    trail.logs[0]["payload_hash"] = "0" * 64
+    assert trail.verify_integrity() is False
+
+
+def test_audit_snapshot_cannot_mutate_internal_ledger():
+    trail = AuditTrail(secret_key="test-key")
+    trail.log("worker", "tier", "EVENT", {"count": 1})
+    snapshot = trail.get_trail()
+    snapshot[0]["actor"] = "tampered externally"
+    assert trail.verify_integrity() is True
+    assert trail.get_trail()[0]["actor"] == "worker"

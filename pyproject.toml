@@ -29,6 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+trace = ["biopython>=1.81,<2"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -36,6 +37,10 @@ dev = [
 
 [project.scripts]
 sanger-trace-trimmer = "cli:main"
+sanger-trim = "trace_quality:main"
+
+[tool.setuptools]
+py-modules = ["cli", "sanger_trim", "trace_quality", "enrichment", "simulator"]
 
 [tool.setuptools.packages.find]
 include = ["agents*"]

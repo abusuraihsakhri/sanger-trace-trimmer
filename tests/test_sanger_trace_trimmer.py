@@ -63,3 +63,20 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_legacy_csv_boolean_parsing():
+    from cli import parse_bool
+    assert parse_bool("False") is False
+    assert parse_bool("0") is False
+    assert parse_bool("YES") is True
+    with pytest.raises(ValueError):
+        parse_bool("maybe")
+
+
+def test_nonfinite_audit_metrics_rejected():
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        SystemTaskPayload(task_id="finite", target_identifier="A", primary_metric=float("nan"))
+    with pytest.raises(ValidationError):
+        SystemTaskPayload(task_id="finite", target_identifier="A", primary_metric=1, secondary_metric=float("inf"))
