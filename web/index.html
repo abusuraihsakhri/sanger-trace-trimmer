@@ -1,236 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sanger Trace Trimmer — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Sanger Trace Trimmer | Quality Trimming</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#edf3fc;background:#0c1423;line-height:1.5}
+*{box-sizing:border-box}body{margin:0}main{max-width:1120px;padding:24px 20px 68px;margin:auto}
+header{padding-bottom:22px;border-bottom:1px solid #33435e;margin-bottom:22px}h1{font-size:clamp(1.8rem,3vw,2.35rem);margin:0}
+h2{font-size:1.16rem;margin:0 0 14px}p{color:#becce0;margin:8px 0}
+.tag{display:inline-block;margin-top:10px;padding:4px 11px;border:1px solid #278b75;border-radius:22px;color:#85eed2;font-size:.8rem}
+.layout{display:grid;grid-template-columns:minmax(295px,370px) minmax(0,1fr);gap:20px}
+.panel{background:#182639;border:1px solid #35445e;border-radius:14px;padding:22px;min-width:0}
+label{display:block;font-weight:650;font-size:.88rem;margin:14px 0 6px}
+input,textarea,button,select{font:inherit}
+input[type=file],input[type=number],textarea,select{width:100%;background:#0f1a2c;border:1px solid #5e7494;color:#eef6ff;border-radius:7px;padding:9px}
+textarea{min-height:125px;resize:vertical;font:13px/1.5 ui-monospace,monospace}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #9ad0ff;outline-offset:2px}
+.hint{font-size:.81rem;color:#aebed4;margin:4px 0 8px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0}
+button{background:#347ee5;border:1px solid #6ca9ff;color:#fff;border-radius:7px;padding:10px 14px;font-weight:650;cursor:pointer}
+button.secondary{background:#2a3e59;border-color:#7285a0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 20px}
+.stat{background:#112138;border:1px solid #374a67;border-radius:9px;padding:12px}
+.stat strong{font-size:1.5rem;display:block}.stat span{color:#b8c8de;font-size:.78rem}
+.table-wrap{overflow-x:auto;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:.83rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #354761;overflow-wrap:anywhere}
+th{color:#ccdaf0}pre{background:#0d1a2d;padding:12px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;color:#94efc7;min-height:48px}
+#error{color:#ffb1b1;min-height:24px;margin-top:10px;overflow-wrap:anywhere}
+footer{margin-top:20px}.small{font-size:.84rem}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.panel{padding:17px}}
+@media(max-width:420px){.controls,.stats{grid-template-columns:1fr}main{padding:14px}}
+</style>
 </head>
-<body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Sanger Trace Trimmer</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
-    </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Sanger Trace Trimmer Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "sanger-trace-trimmer",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
-</body>
-</html>
+<body><main>
+<header><h1>Sanger Trace Trimmer</h1>
+<p>Trim low-quality ends from Sanger base calls using the Mott algorithm; inspect Q20/Q30 and ambiguity statistics.</p>
+<span class="tag">Local browser processing · No uploads</span></header>
+<div class="layout">
+<section class="panel" aria-labelledby="inputs"><h2 id="inputs">Input &amp; parameters</h2>
+<label for="file">Chromatogram / FASTQ</label>
+<input id="file" type="file" accept=".ab1,.abi,.fastq,.fq">
+<p class="hint">ABI/AB1 (PBAS/PCON entries) or four-line FASTQ (Phred+33). Maximum 10 MB.</p>
+<label for="paste">Or paste FASTQ records</label>
+<textarea id="paste" spellcheck="false" placeholder="@sample&#10;ACGTN...&#10;+&#10;!IIII..." aria-describedby="paste-help"></textarea>
+<p id="paste-help" class="hint">A selected file takes precedence over pasted text.</p>
+<div class="controls">
+<div><label for="cutoff">Mott cutoff (Q)</label><input id="cutoff" type="number" min="0" max="60" step="1" value="20"></div>
+<div><label for="min-length">Minimum length</label><input id="min-length" type="number" min="1" max="1000000" step="1" value="1"></div>
+</div>
+<div class="actions"><button id="run" type="button">Trim &amp; analyze</button><button id="example" type="button" class="secondary">Load example</button></div>
+<div id="error" role="alert" aria-live="polite"></div>
+<p class="hint">The Mott algorithm maximizes the cumulative difference between the cutoff error probability and per-base error probability. It can retain internal low-quality positions.</p>
+</section>
+<section class="panel" aria-labelledby="reports"><h2 id="reports">Results &amp; QC</h2>
+<p id="empty">Load a file or example to view retained read boundaries and export sequences.</p>
+<div id="results" hidden>
+<div class="stats">
+<div class="stat"><strong id="read-count">0</strong><span>Reads analyzed</span></div>
+<div class="stat"><strong id="retained-count">0</strong><span>Reads retained</span></div>
+<div class="stat"><strong id="base-count">0</strong><span>Bases retained</span></div>
+</div>
+<label for="choose-read">Inspect read</label><select id="choose-read"></select>
+<p id="coordinates" class="hint"></p><pre id="sequence" aria-live="polite"></pre>
+<div class="table-wrap"><table>
+<thead><tr><th>Read</th><th>Input</th><th>Retained</th><th>Q20</th><th>Q30</th><th>Ambiguous</th></tr></thead>
+<tbody id="table-body"></tbody></table></div>
+<div class="actions"><button class="secondary" id="download-fasta" type="button">Download FASTA</button>
+<button class="secondary" id="download-fastq" type="button">Download FASTQ</button>
+<button class="secondary" id="download-json" type="button">Download QC JSON</button></div>
+</div></section></div>
+<footer class="panel"><h2>Interpretation &amp; privacy</h2>
+<p>Start/end coordinates are zero-based with an exclusive end. QC percentages apply to retained bases; reads without a passing region have length zero. The application does not re-call chromatogram peaks, align a vector reference, or validate a clinical diagnosis.</p>
+<p class="small">All file parsing, calculations, and downloads occur within your browser. No data is sent to a server. The Python command-line interface provides equivalent FASTQ and optional AB1 processing for batch work.</p></footer>
+</main><script src="./app.js" defer></script></body></html>
