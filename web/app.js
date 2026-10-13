@@ -160,7 +160,7 @@ if (typeof document !== 'undefined') {
       data = JSON.stringify(output.map(({ sequence, qualities, original_qualities, ...qc }) => qc), null, 2) + '\n';
       filename = 'sanger-qc.json'; mime = 'application/json';
     } else {
-      data = output.map(r => {
+      data = output.filter(r => r.trimmed_length > 0).map(r => {
         const name = r.name.replace(/[\r\n]/g, ' ');
         if (kind === 'fasta')
           return '>' + name + ' start=' + r.start + ' end=' + r.end + '\n' + r.sequence + '\n';
